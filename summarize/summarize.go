@@ -67,7 +67,12 @@ func (s Summarize) KeyPoints() []string {
 
 		freq := (sbs + dbs) / 2 * 10
 		total := (titleScore*1.5 + freq*2 + lengthScore + positionScore) / 4
-		ranks.Add(sent, int(total*100))
+		/*slice := 10
+		if len(sent) < 10 {
+			slice = len(sent) - 1
+		}*/
+		//fmt.Println(sent[:slice], sbs /*titleScore, sbs, dbs, lengthScore, positionScore*/)
+		ranks.Add(sent, total)
 	}
 
 	var keyPoints []string
@@ -94,7 +99,7 @@ func (s Summarize) keywords(text string) map[string]float64 {
 	filteredWords := []string{}
 
 	for _, w := range allWords {
-		if !s.StopWordsProvider.IsStopWord(w) {
+		if !s.StopWordsProvider.IsStopWord(w) && len(w) > 2 {
 			filteredWords = append(filteredWords, w)
 		}
 	}
@@ -105,7 +110,7 @@ func (s Summarize) keywords(text string) map[string]float64 {
 	keyMap := map[string]float64{}
 
 	for _, p := range pairs {
-		score := float64(p.Count) / allLen
+		score := p.Count / allLen
 		keyMap[p.Text] = score*1.5 + 1
 	}
 
@@ -173,7 +178,7 @@ func (s Summarize) sbs(words []string, keywords map[string]float64) float64 {
 		}
 	}
 
-	return (1 / float64(len(words)) * score) / 10
+	return (1.0 / float64(len(words)) * score) / 10.0
 }
 
 func (s Summarize) dbs(words []string, keywords map[string]float64) float64 {
@@ -197,7 +202,10 @@ func (s Summarize) dbs(words []string, keywords map[string]float64) float64 {
 				first[0], first[1] = float64(i), c
 
 				diff := first[0] - second[0]
-				summ += first[1] * second[1] / math.Pow(diff, 2)
+				// if diff is 0 then you cannot divide it
+				if diff != 0 {
+					summ += (first[1] * second[1]) / math.Pow(diff, 2)
+				}
 			}
 
 			uniqueWords[w] = true
@@ -205,7 +213,7 @@ func (s Summarize) dbs(words []string, keywords map[string]float64) float64 {
 	}
 
 	k := float64(len(uniqueWords) + 1)
-	return (1 / (k * (k + 1)) * summ)
+	return (1.0 / (k * (k + 1.0)) * summ)
 }
 
 func toLower(words []string) []string {

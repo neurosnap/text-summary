@@ -2,11 +2,11 @@ package summarize
 
 import "sort"
 
-type TextCounter map[string]int
+type TextCounter map[string]float64
 type CommonPairs []CommonPair
 type CommonPair struct {
 	Text  string
-	Count int
+	Count float64
 }
 
 func NewTextCounterFromPairs(pairs CommonPairs) TextCounter {
@@ -27,8 +27,8 @@ func NewTextCounterFromSlice(words []string) TextCounter {
 	return tc
 }
 
-func (tc TextCounter) Add(text string, score ...int) {
-	sc := 1
+func (tc TextCounter) Add(text string, score ...float64) {
+	sc := 1.0
 	if len(score) > 0 {
 		sc = score[0]
 	}
@@ -47,7 +47,7 @@ func (tc TextCounter) MostCommon(limit ...int) CommonPairs {
 		pairs = append(pairs, CommonPair{Text: t, Count: c})
 	}
 
-	sort.Sort(sort.Reverse(pairs))
+	sort.Sort(pairs)
 
 	if len(limit) > 0 && len(pairs) > limit[0] {
 		return pairs[:limit[0]]
@@ -61,7 +61,10 @@ func (c CommonPairs) Len() int {
 }
 
 func (c CommonPairs) Less(i, j int) bool {
-	return c[i].Count < c[j].Count
+	if c[i].Count == c[j].Count {
+		return len(c[i].Text) > len(c[j].Text)
+	}
+	return c[i].Count > c[j].Count
 }
 
 func (c CommonPairs) Swap(i, j int) {
